@@ -6,7 +6,7 @@ import { UploadWidgetUploadList } from "./upload-widget-upload-list";
 import { UploadWidgetMinimizedButton } from './upload-widget-minimized-button';
 
 export function UploadWidget() {
-  const isThereAnyPendingUpload = false
+  const isThereAnyPendingUpload = true
 
   const [isWidgetOpen, toggleWidgetOpen] = useCycle(false, true)
 
