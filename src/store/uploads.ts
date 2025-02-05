@@ -1,13 +1,16 @@
-import { create } from "zustand";
+import { create } from "zustand"
 import { enableMapSet } from 'immer'
 import { immer } from 'zustand/middleware/immer'
-import { uploadFileToStorage } from "../http/upload-file-to-storage";
+import { uploadFileToStorage } from "../http/upload-file-to-storage"
+import { CanceledError } from "axios"
 
 export type Upload = {
   name: string
   file: File
   abortController: AbortController
   status: 'progress' | 'success' | 'error' | 'canceled'
+  originalSizeInBytes: number
+  uploadSizeInBytes: number
 }
 
 type UploadState = {
@@ -29,7 +32,17 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
 
       try {
         await uploadFileToStorage(
-          { file: upload.file }, 
+          { 
+            file: upload.file,
+            onProgress(sizeInBytes) {
+              set(state => {
+                state.uploads.set(uploadId, { 
+                  ...upload, 
+                  uploadSizeInBytes: sizeInBytes,
+                })
+              })
+            },  
+          }, 
           { signal: upload.abortController.signal }
         ) 
   
@@ -39,7 +52,18 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
             status: 'success' 
           })
         })
-      } catch {
+      } catch (err) {
+        if(err instanceof CanceledError) {
+          set(state => {
+            state.uploads.set(uploadId, { 
+              ...upload, 
+              status: 'canceled' 
+            })
+          })
+
+          return
+        }
+
         set(state => {
           state.uploads.set(uploadId, { 
             ...upload, 
@@ -57,13 +81,6 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
       }
 
       upload.abortController.abort()
-
-      set(state => {
-        state.uploads.set(uploadId, { 
-          ...upload, 
-          status: 'canceled' 
-        })
-      })
     }
 
     function addUploads(files: File[]) {
@@ -76,6 +93,8 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
           file,
           abortController,
           status: 'progress',
+          originalSizeInBytes: file.size,
+          uploadSizeInBytes: 0
         }
 
         set(state => {
