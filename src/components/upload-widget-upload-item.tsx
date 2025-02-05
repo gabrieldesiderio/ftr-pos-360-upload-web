@@ -28,17 +28,21 @@ export function UploadWidgetUploadItem({ upload, uploadId }: UploadWidgetUploadI
       transition={{ duration: 0.4 }}
     >
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium flex items-center gap-1">
-          <ImageUp className="size-3 text-zinc-300" strokeWidth={1.5} />
-          <span>{upload.name}</span>
+        <span className="text-xs font-medium flex items-center gap-1 max-w-48" title={upload.name}>
+          <ImageUp className="size-3 text-zinc-300 shrink-0" strokeWidth={1.5} />
+          <p className='truncate overflow-hidden text-ellipsis'>{upload.name}</p>
         </span>
 
         <span className="text-xxs text-zinc-400 flex gap-1.5 items-center">
           <span className="line-through">{formatBytes(upload.originalSizeInBytes)}</span>
           <div className="size-1 rounded-full bg-zinc-700" />
           <span>
-            300KB
-            <span className="text-green-400 ml-1">-94%</span>
+            {formatBytes(upload.compressedSileInBytes || 0)}
+            {upload.compressedSileInBytes && 
+              <span className="text-green-400 ml-1">
+                -{Math.round((upload.originalSizeInBytes - upload.compressedSileInBytes) * 100 / upload.originalSizeInBytes)}%
+              </span>
+            }
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           {upload.status === 'success' && <span>100%</span>}
@@ -60,9 +64,15 @@ export function UploadWidgetUploadItem({ upload, uploadId }: UploadWidgetUploadI
       </Progress.Root>
 
       <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-        <Button size="icon-sm" disabled={upload.status !== 'success'}>
-          <Download className="size-4" strokeWidth={1.5} />
-          <span className="sr-only">Download compressed image</span>
+        <Button 
+          size="icon-sm" 
+          aria-disabled={upload.status !== 'success'}
+          asChild
+        >
+          <a href={upload.remoteUrl}>
+            <Download className="size-4" strokeWidth={1.5} />
+            <span className="sr-only">Download compressed image</span>
+          </a>
         </Button>
         <Button 
           size="icon-sm" 
