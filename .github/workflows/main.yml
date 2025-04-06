@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  AWS_S3_BUCKET: ftr-upload-widget-static-web-app
+  AWS_S3_BUCKET_STATIC: ftr-upload-widget-static-web-app
+  AWS_S3_BUCKET_CDN: ftr-upload-widget-cdn-web-app
   SOURCE_DIST: ./dist
 
 jobs:
@@ -48,7 +49,12 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Sync files to S3
-        id: synf-files-to-s3
+        id: sync-files-to-s3-static
         run: |
-          aws s3 sync ${{ env.SOURCE_DIST }} s3://${{ env.AWS_S3_BUCKET }}/ --delete --exclude '.*git*'
+          aws s3 sync ${{ env.SOURCE_DIST }} s3://${{ env.AWS_S3_BUCKET_STATIC }}/ --delete --exclude '.*git*'
+
+      - name: Sync files to S3
+        id: sync-files-to-s3-cdn
+        run: |
+          aws s3 sync ${{ env.SOURCE_DIST }} s3://${{ env.AWS_S3_BUCKET_CDN }}/ --delete --exclude '.*git*'
 
